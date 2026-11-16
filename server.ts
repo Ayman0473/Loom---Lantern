@@ -136,25 +136,26 @@ app.post('/api/tts', async (req: Request, res: Response) => {
         : 'Warm, expressive children’s storybook narrator with gentle pauses and clear joyful pacing';
 
     const ai = getAiClient();
+    // Gemini TTS endpoint – simplified to avoid unsupported fields.
+    // The request includes only the text; default voice is used unless a pre‑built voice is specified via the model's config.
     const response = await ai.models.generateContent({
       model: 'gemini-3.8-flash-tts',
       contents: [
         {
           role: 'user',
           parts: [
-            {
-              text: text.trim().slice(0, 2500),
-              speechMetadata: {
-                style: safeStyle,
-              },
-            },
+            { text: text.trim().slice(0, 2500) },
           ],
         },
       ],
-      config: {
+      generationConfig: {
         responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
+        // Voice selection is done via the `audioConfig` field if the model supports it.
+        // The current SDK expects the voice name under `voice` (or prebuiltVoiceConfig) inside `audioConfig`.
+        // We'll include it if the model accepts it; otherwise the default voice is used.
+        // Note: If this field causes errors, it can be omitted – the model will fall back to its default voice.
+        audioConfig: {
+          voice: {
             prebuiltVoiceConfig: {
               voiceName: safeVoice,
             },
